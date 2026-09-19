@@ -1,0 +1,11 @@
+dialog { width: min(640px, 90vw); max-height: 85vh; overflow: auto; border: 1px solid #d5e3da; border-radius: 16px; padding: 26px; color: #203c32; }
+dialog::backdrop { background: #14291d88; }
+.chapter-row { margin: 16px 0; border-bottom: 1px solid #d5e3da; padding-bottom: 12px; }
+.chapter-row strong { display: block; margin-bottom: 8px; }
+.chapter-row button { margin-bottom: 8px; }
+.chapter-row button:disabled { opacity: .45; cursor: default; }
+dialog label { display: block; margin: 16px 0; font-size: 14px; }
+dialog input, dialog textarea, dialog select { display: block; width: 100%; box-sizing: border-box; padding: 10px; margin-top: 7px; border: 1px solid #bccfc4; border-radius: 6px; font: inherit; }
+dialog textarea { min-height: 160px; }
+dialog button { padding: 10px 18px; margin-right: 10px; cursor: pointer; }
+#writingIssues button { display: block; width: 100%; text-align: left; padding: 12px; margin: 8px 0; border: 1px solid #d7a64b; background: #fff8e9; color: #623a16; cursor: pointer; }

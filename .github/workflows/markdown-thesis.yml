@@ -1,0 +1,113 @@
+name: Markdown Thesis
+
+on:
+  push:
+    paths:
+      - 'markdown/**'
+      - '厦门工学院毕业设计论文模板.zip'
+      - '.github/workflows/markdown-thesis.yml'
+  pull_request:
+    paths:
+      - 'markdown/**'
+      - '厦门工学院毕业设计论文模板.zip'
+      - '.github/workflows/markdown-thesis.yml'
+  workflow_dispatch:
+    inputs:
+      full_pdf:
+        description: 'Install TeX Live and build thesis.pdf'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  markdown-to-latex:
+    name: Validate and generate LaTeX
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: markdown/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          curl --fail --location --retry 3 -o /tmp/pandoc.deb https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-1-amd64.deb
+          sudo dpkg -i /tmp/pandoc.deb
+          python -m pip install -r markdown/requirements.txt
+
+      - name: Run unit tests
+        run: python scripts/run_tests.py
+
+      - name: Test editor recovery
+        run: |
+          node markdown/tests/test_undo.cjs
+          node markdown/tests/test_drafts.cjs
+
+      - name: Validate Markdown sources
+        working-directory: markdown
+        run: python xit.py check
+
+      - name: Generate LaTeX project
+        working-directory: markdown
+        run: python xit.py tex
+
+      - name: Upload generated LaTeX project
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-generated-latex
+          path: markdown/build/project
+          if-no-files-found: error
+
+  full-pdf:
+    name: Build PDF on demand
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_pdf }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: markdown/requirements.txt
+
+      - name: Install Pandoc, TeX Live and Biber
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            biber \
+            texlive-xetex \
+            texlive-latex-extra \
+            texlive-lang-chinese \
+            texlive-bibtex-extra \
+            texlive-science \
+            fonts-noto-cjk \
+            fonts-noto-mono \
+            fonts-liberation
+          python -m pip install -r markdown/requirements.txt
+          curl --fail --location --retry 3 -o /tmp/pandoc.deb https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-1-amd64.deb
+          sudo dpkg -i /tmp/pandoc.deb
+
+      - name: Build PDF
+        working-directory: markdown
+        env:
+          XIT_PORTABLE_FONTS: '1'
+        run: python xit.py pdf
+
+      - name: Upload thesis PDF
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-thesis-pdf
+          path: markdown/build/thesis.pdf
+          if-no-files-found: error

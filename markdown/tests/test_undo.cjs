@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const {EditHistory}=require('../assistant/static/undo.js');
+const v=(text,start=text.length,end=start)=>({text,start,end});
+let h=new EditHistory(v(''));
+h.record(v(''),v('a'),'insertText',0);h.record(v('a'),v('ab'),'insertText',100);
+assert.equal(h.move(-1).text,'');assert.equal(h.move(1).text,'ab');
+h.record(v('ab'),v('abc'),'insertText',2000);assert.equal(h.move(-1).text,'ab');
+h.record(v('ab'),v('abX'),'insertFromPaste',2200);assert.equal(h.move(1),null);
+assert.equal(h.move(-1).text,'ab');
+h=new EditHistory(v('hello'));h.record(v('hello',1,4),v('hXo',2),'insertFromPaste');
+assert.deepEqual(h.move(-1),v('hello',1,4));
+h.record(v('hello'),v('hello中文'),'composition');assert.equal(h.move(-1).text,'hello');
+let other=new EditHistory(v('other'));assert.equal(other.move(-1),null);
+h=new EditHistory(v('0'));for(let i=1;i<=110;i++)h.record(v(String(i-1)),v(String(i)),'assisted');
+assert.equal(h.items.length,101);for(let i=0;i<100;i++)assert.ok(h.move(-1));assert.equal(h.move(-1),null);
+console.log('PASS: typing grouping, pause boundary, redo, branch invalidation, selection, IME transaction, independent history and 100-step cap');

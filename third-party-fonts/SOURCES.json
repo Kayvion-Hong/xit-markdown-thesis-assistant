@@ -1,0 +1,17 @@
+[
+  {
+    "package": "fandol",
+    "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol.zip",
+    "sha256": "9278f01b417ded5766d98c3937192a1a6a2c73a5e94a3493fdfc932b2a55005a"
+  },
+  {
+    "package": "tex-gyre",
+    "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/tex-gyre.zip",
+    "sha256": "1773c470f9e388e087b68e3426e115af2cd236845a7e05ceb25b2a503409a7a3"
+  },
+  {
+    "package": "lm",
+    "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/lm.zip",
+    "sha256": "71c48809cb50fbfe09c8eddaa251398957c7b243acdf69f7f807268f0d42c939"
+  }
+]

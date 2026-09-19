@@ -1,0 +1,11 @@
+{
+  "source": "https://github.com/Kayvion-Hong/xit-bachelor-thesis-latex-template",
+  "github_blob": "72657421df9eeb42816752c5cf7c0301aea2eb9a",
+  "zip_sha256": "ea14d834a790f9562b893eda611fd0eca9f071855ee41832dcc92e527c8da4d2",
+  "objects": {
+    "figures": 8,
+    "tables": 6,
+    "equations": 6,
+    "listings": 4
+  }
+}

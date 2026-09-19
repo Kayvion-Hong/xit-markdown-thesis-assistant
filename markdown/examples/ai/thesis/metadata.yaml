@@ -1,0 +1,38 @@
+school: 厦门工学院
+thesis_name: 本科毕业论文（设计）
+title: 基于 STM32 的智能照明系统设计
+english_title: Design of an STM32-Based Intelligent Lighting System
+author: 张三
+student_id: '2022110001'
+major: 电子信息工程
+grade: 2022 级
+supervisor: 李华
+date: 2026 年 5 月
+keywords_cn:
+- 智能照明
+- 能耗监测
+- STM32
+- 传感器融合
+- 节能控制
+keywords_en:
+- intelligent lighting
+- energy monitoring
+- STM32
+- sensor fusion
+- energy-saving control
+abstract_cn: abstract-cn.md
+abstract_en: abstract-en.md
+bibliography: references.bib
+chapters:
+- chapters/chapter1.md
+- chapters/chapter2.md
+- chapters/chapter3.md
+- chapters/chapter4.md
+- chapters/chapter5.md
+conclusion: conclusion.md
+acknowledgements: acknowledgements.md
+appendices:
+- title: 部分关键源码及解释
+  source: appendices/appendixA.md
+- title: 模拟图片与替换说明
+  source: appendices/appendixB.md

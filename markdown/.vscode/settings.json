@@ -1,0 +1,9 @@
+{
+  "editor.wordWrap": "on",
+  "editor.renderWhitespace": "boundary",
+  "files.exclude": {
+    "build": true,
+    "**/__pycache__": true
+  },
+  "markdown.validate.enabled": true
+}

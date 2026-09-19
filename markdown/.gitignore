@@ -1,0 +1,7 @@
+/build/
+__pycache__/
+*.pyc
+*.bak
+.venv/
+/build-ai/
+examples/ai/thesis/.history/

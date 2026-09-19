@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="xit-token" content="__XIT_TOKEN__">
+  <title>厦门工学院 Markdown 论文助手</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/novice.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">论文</div>
+      <div>
+        <h1>毕业论文写作助手</h1>
+        <p>Markdown 写内容，LaTeX 负责排版</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="saveState" class="save-state">内容已同步</span>
+      <button class="button ghost" id="refreshButton">刷新状态</button>
+      <button class="button danger-ghost" id="shutdownButton">关闭助手</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <aside class="sidebar">
+      <div class="progress-card">
+        <span class="eyebrow">当前进度</span>
+        <strong id="progressText">正在读取项目…</strong>
+        <div class="progress-track"><span id="progressBar"></span></div>
+      </div>
+      <nav aria-label="论文助手功能">
+        <button class="nav-item active" data-panel="home"><span>1</span>开始</button>
+        <button class="nav-item" data-panel="metadata"><span>2</span>填写资料</button>
+        <button class="nav-item" data-panel="writing"><span>3</span>写论文</button>
+        <button class="nav-item" data-panel="build"><span>4</span>检查与导出</button>
+        <button class="nav-item" data-panel="help"><span>?</span>写作帮助</button>
+        <button class="nav-item ai-only hidden" data-panel="tutorial"><span>课</span>AI 示例教学</button>
+      </nav>
+      <div class="sidebar-note">
+        <strong>不用碰 LaTeX 文件</strong>
+        <p>日常写作只在这个页面进行。排版由原模板自动完成。</p>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div id="notice" class="notice hidden" role="status"></div>
+      <div class="callout ai-only hidden"><strong>正在编辑独立的 AI 教学项目：《基于 STM32 的智能照明系统设计》</strong><p>内容来自 GitHub 原示例的 Markdown 教学改编。数据和部分文献未核验，仅用于排版练习；此模式不修改普通项目。左侧“AI 示例教学”提供逐项练习。</p><a href="/original-preview.pdf" target="_blank">查看 GitHub 原示例 PDF</a></div>
+      <section class="panel" id="panel-tutorial"><div class="section-heading"><div><h2>跟着原 AI 论文完成九项练习</h2><p>每次修改后生成 PDF，观察结果；正式写作请关闭教学助手，运行普通“启动论文助手.bat”。</p></div></div><div id="lessonCards" class="action-grid"></div></section>
+
+      <section class="panel active" id="panel-home">
+        <div class="hero">
+          <div>
+            <span class="eyebrow">第一次使用</span>
+            <h2>按四步完成论文排版</h2>
+            <p>先确认环境，再填写资料、编辑正文，最后生成 PDF。页面会保存到本机项目文件夹。</p>
+          </div>
+          <button class="button primary large" data-go="metadata">开始填写论文资料</button>
+        </div>
+
+        <div class="step-grid">
+          <article class="step-card"><span>01</span><h3>检查环境</h3><p>确认编译程序已经安装。</p></article>
+          <article class="step-card"><span>02</span><h3>填写资料</h3><p>题目、姓名、学号和关键词。</p></article>
+          <article class="step-card"><span>03</span><h3>编辑正文</h3><p>摘要、章节、总结和谢辞。</p></article>
+          <article class="step-card"><span>04</span><h3>生成 PDF</h3><p>自动检查、编译并打开结果。</p></article>
+        </div>
+
+        <div class="section-heading">
+          <div><span class="eyebrow">电脑环境</span><h2>编译能力</h2></div>
+          <span id="environmentSummary" class="pill neutral">正在检查</span>
+        </div>
+        <div id="environmentGrid" class="environment-grid"></div>
+        <div id="environmentHelp" class="callout hidden"></div>
+        <div class="callout"><strong>运行环境帮助</strong><p>先运行诊断定位路径、权限与文件缺失；添加额外宏包时可按需联网补装。</p><button id="compatCheck" class="button secondary">运行诊断</button> <button id="installTexPackage" class="button secondary">联网补装 TeX 宏包</button><pre id="compatLog" style="white-space:pre-wrap"></pre></div>
+      </section>
+
+      <section class="panel" id="panel-metadata">
+        <div class="section-heading">
+          <div><span class="eyebrow">第 2 步</span><h2>论文基本资料</h2><p>这些内容会自动填入封面和摘要页。</p></div>
+          <button class="button primary" id="saveMetadata">保存基本资料</button>
+        </div>
+        <form id="metadataForm" class="form-grid">
+          <label class="field full"><span>中文题目</span><input name="title" autocomplete="off"><small>编译时检测封面题目实际宽度；超宽会停止并提示修改，不自动缩小模板字号。</small></label>
+          <label class="field full"><span>英文题目</span><input name="english_title" autocomplete="off"></label>
+          <label class="field"><span>姓名</span><input name="author" autocomplete="name"></label>
+          <label class="field"><span>学号</span><input name="student_id" autocomplete="off"></label>
+          <label class="field"><span>专业</span><input name="major" autocomplete="off"></label>
+          <label class="field"><span>年级</span><input name="grade" placeholder="例如：2023"></label>
+          <label class="field"><span>指导教师</span><input name="supervisor" autocomplete="off"></label>
+          <label class="field"><span>日期</span><input name="date" placeholder="例如：2027年5月"></label>
+          <label class="field"><span>中文关键词</span><input name="keywords_cn" placeholder="用逗号分隔"></label>
+          <label class="field"><span>英文关键词</span><input name="keywords_en" placeholder="用逗号分隔"></label>
+        </form>
+        <div class="form-footer">
+          <p>提示：保存后可以继续写正文，不需要打开 metadata.yaml。</p>
+          <button class="button secondary" data-go="writing">保存后去写正文 →</button>
+        </div>
+      </section>
+
+      <section class="panel writing-panel" id="panel-writing">
+        <div class="editor-head">
+          <div>
+            <span class="eyebrow">第 3 步</span>
+            <h2>编辑论文内容</h2>
+          </div>
+          <div class="editor-actions">
+            <button class="button ghost" id="reloadFile">重新载入</button>
+            <button class="button primary" id="saveFile">保存当前内容</button>
+          </div>
+        </div>
+        <div class="editor-layout">
+          <div class="document-list" id="documentList"></div>
+          <div class="editor-area">
+            <div class="editor-title-row">
+              <div><strong id="currentFileLabel">请选择内容</strong><span id="currentFilePath"></span></div>
+              <span id="fileHint" class="hint"></span>
+            </div>
+            <div class="toolbar" aria-label="Markdown 快捷工具">
+              <button data-insert="section">二级标题</button>
+              <button data-insert="formula">编号公式</button>
+              <button data-insert="table">三线表</button>
+              <button data-insert="citation">文献引用</button>
+              <button data-insert="code">代码块</button>
+              <label class="upload-button">插入图片<input type="file" id="imageInput" accept=".png,.jpg,.jpeg,.pdf"></label>
+            </div>
+            <textarea id="editor" spellcheck="false" placeholder="在这里写论文内容……"></textarea>
+            <div class="editor-footer"><span id="wordCount">0 个字符</span><span>Ctrl+Z 撤销 · Ctrl+Y 重做 · 停止输入约 1.2 秒自动保存 · Ctrl+S 保存</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-build">
+        <div class="section-heading">
+          <div><span class="eyebrow">第 4 步</span><h2>检查与生成 PDF</h2><p>先保存正在编辑的内容，再进行检查或编译。</p></div>
+        </div>
+        <div class="action-grid">
+          <article class="action-card">
+            <div class="action-icon">查</div><h3>检查论文</h3>
+            <p>检查图片、章节、标签和参考文献，不生成 PDF。</p>
+            <button class="button secondary full-button" data-action="check">开始检查</button>
+          </article>
+          <article class="action-card featured">
+            <div class="action-icon">PDF</div><h3>生成论文 PDF</h3>
+            <p>自动完成 Pandoc、XeLaTeX 和参考文献处理。</p>
+            <button class="button primary full-button" data-action="pdf">生成 PDF</button>
+            <button class="button secondary full-button" data-action="pdf-portable">用随包字体生成预览 PDF</button><p>缺少系统字体时可用开源替代字体预览，字体与分页可能不同，不能视为原模板定稿。</p>
+          </article>
+          <article class="action-card">
+            <div class="action-icon">终</div><h3>定稿检查</h3>
+            <p>姓名、学号等占位内容也会被判定为问题。</p>
+            <button class="button secondary full-button" data-action="final-check">开始定稿检查</button>
+          </article>
+        </div>
+        <div id="buildResult" class="build-result empty">
+          <div><span class="status-dot"></span><strong>尚未执行检查</strong></div>
+          <p>运行结果会显示在这里，并尽量告诉你具体应该修改什么。</p>
+          <pre id="buildLog"></pre>
+          <a id="openPdf" class="button primary hidden" href="/build/thesis.pdf" target="_blank">打开生成的 PDF</a>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-help">
+        <div class="section-heading"><div><span class="eyebrow">不会写时看这里</span><h2>常用写法</h2></div></div>
+        <div class="help-grid">
+          <article><h3>普通正文</h3><pre>## 研究背景
+
+这里写正文。两段之间空一行。
+
+这是第二段。</pre></article>
+          <article><h3>引用文献</h3><pre>已有研究指出…… [@zhang2026]。</pre><p>同时在“参考文献库”中添加相同 key 的 BibTeX 条目。</p></article>
+          <article><h3>引用图片</h3><pre>如[图](#fig:system)所示。
+
+![系统架构](figures/system.png){#fig:system width=90%}</pre></article>
+          <article><h3>编号公式</h3><pre>::: {#eq:model .equation}
+$$
+y = ax + b
+$$
+:::
+
+由[式](#eq:model)可知……</pre></article>
+        </div>
+        <div class="callout"><strong>正式提交前</strong><p>编译成功只代表技术流程通过。仍需人工检查封面、分页、字体、图片清晰度，并以学校、学院和指导教师当年的要求为准。</p></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="busy" class="busy hidden"><div class="spinner"></div><strong id="busyText">正在处理…</strong><p>生成 PDF 通常需要几十秒，请不要关闭页面。</p></div>
+  <script src="/novice.js"></script>
+  <script src="/chapters.js"></script>
+  <script src="/tutorial.js"></script>
+  <script src="/comfort.js"></script>
+  <script src="/undo.js"></script>
+  <script src="/drafts.js"></script>
+  <script src="/compat.js"></script>
+  <script src="/live-preview.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

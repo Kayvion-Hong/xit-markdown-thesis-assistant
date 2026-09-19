@@ -1,0 +1,34 @@
+school: 厦门工学院
+thesis_name: 本科毕业论文（设计）
+title: Markdown 论文写作示例
+english_title: An Example Thesis Workflow Based on Markdown and LaTeX
+author: 请输入姓名
+student_id: 请输入学号
+major: 请输入专业
+grade: 请输入年级
+supervisor: 请输入指导教师
+date: 请输入日期
+keywords_cn:
+- Markdown
+- LaTeX
+- 版本控制
+keywords_en:
+- Markdown
+- LaTeX
+- version control
+abstract_cn: abstract-cn.md
+abstract_en: abstract-en.md
+bibliography: references.bib
+chapters:
+- chapters/01-introduction.md
+- chapters/02-design.md
+- chapters/03-implementation.md
+- chapters/04-testing.md
+- chapters/05-results.md
+conclusion: conclusion.md
+acknowledgements: acknowledgements.md
+appendices:
+- title: Markdown 与 LaTeX 对照示例
+  source: appendices/appendixA.md
+- title: 构建与检查清单
+  source: appendices/appendixB.md

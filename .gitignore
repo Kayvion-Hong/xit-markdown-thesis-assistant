@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+runtime/*
+!runtime/README.md
+!runtime/THIRD_PARTY.md
+!runtime/SHA256.json
+markdown/build/
+markdown/build-ai/
+markdown/.preview/
+markdown/.project-backups/
+**/.history/
+*.tmp-*
+.xit-start-test-*

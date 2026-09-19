@@ -2,6 +2,8 @@
 
 先用示例成功生成一份 PDF，再开始写自己的论文。第一次不用理解所有按钮，也不用先学会 LaTeX。
 
+如果想边看边练，请打开 [AI 示例图文实操](AI_WALKTHROUGH.md)，从改姓名和一段文字开始。本页可作为日常使用时的操作参考。
+
 ## 1. 下载正确的文件
 
 打开 [Releases](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases)，找到版本下的 **Assets**，下载 `xit-v0.5.0-live-preview-windows.zip`。

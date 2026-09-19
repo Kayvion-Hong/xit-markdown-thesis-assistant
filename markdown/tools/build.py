@@ -727,8 +727,14 @@ def write_build_report(build_dir: Path, config: dict[str, Any], warnings: list[s
 
 
 def compile_pdf(project_dir: Path, build_dir: Path) -> tuple[Path, list[str]]:
+    tex_root = REPO_ROOT / 'runtime/TinyTeX'
+    override = os.environ.get('XIT_XELATEX')
+    if override:
+        candidate = Path(override).resolve().parent.parent.parent
+        if (candidate / 'texmf-dist').is_dir():
+            tex_root = candidate
     try:
-        with windows_compile.native_workspace(project_dir, REPO_ROOT / 'runtime/TinyTeX') as (staged, binary, env):
+        with windows_compile.native_workspace(project_dir, tex_root) as (staged, binary, env):
             if binary:
                 print('[路径兼容] 使用英文临时编译目录，论文仍保存在原位置。')
             return compile_pdf_native(staged, build_dir, binary, env)

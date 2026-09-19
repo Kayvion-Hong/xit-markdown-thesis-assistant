@@ -203,13 +203,13 @@ window.livePreview = (() => {
     try {
       if(!(await flushSaves()))throw new Error('保存未成功，已停止编译。请先处理保存提示。');
       const result=await api('/api/preview',{method:'POST',body:'{}'});el('previewLog').textContent=result.output||'';
-      if(!result.ok)throw new Error(result.busy?'另一个编译正在运行，请稍后重试。':'编译未成功，保留上次预览。请展开下方日志查看错误。');
+      if(!result.ok)throw new Error(result.busy?'另一个编译正在运行，请稍后重试。':(result.pdf?'本轮编译失败，下方仍为旧 PDF。':'本轮编译失败，尚无可显示的 PDF。')+'请展开错误详情，修正后重新编译。');
       await loadPDF();compiledVersion=target;
-      status((result.portable_fonts?'替代字体预览，定稿需核对 · ':'')+(version===target?'已更新 · ':'本轮完成，仍有新修改待编译 · ')+new Date().toLocaleTimeString());
+      status((result.portable_fonts?'替代字体预览，定稿需核对 · ':'')+(version===target && result.preview_status.state==='current'?'已更新 · ':'本轮完成，仍有新修改待编译 · ')+new Date().toLocaleTimeString());
     }catch(error){status(error.message);}finally{running=false;el('compilePreview').disabled=false;if(version!==target)schedule();}
   }
   function ready(value){project=value;const select=el('writingFile');select.replaceChildren();for(const file of value.files){const option=document.createElement('option');option.value=file.path;option.textContent=file.label;select.append(option);}select.value=state.currentPath||'';if(active && !pdf)open();}
-  function open(){active=true;if(!project)return;if(version!==compiledVersion)schedule();if(!pdf && project.preview_pdf)loadPDF().then(()=>status('显示上次成功编译的 PDF；修改后将重新编译。')).catch(e=>status(e.message));else if(!pdf){lastEdit=Date.now();schedule();}else layoutPages(currentLocation()).catch(e=>status(e.message));}
+  function open(){active=true;if(!project)return;if(version!==compiledVersion)schedule();if(!pdf && project.preview_pdf)loadPDF().then(()=>status(previewStatusText(project.preview_status))).catch(e=>status(e.message));else if(!pdf){lastEdit=Date.now();schedule();}else layoutPages(currentLocation()).catch(e=>status(e.message));}
   function chooseZoom(value){zoom=value;el('pdfZoom').value=['width','page','25','50','67','75','90','100','110','125','150','175','200','250','300'].includes(value)?value:'custom';if(pdf)layoutPages(currentLocation()).catch(e=>status(e.message));}
   document.addEventListener('DOMContentLoaded',()=>{
     const layout=document.querySelector('.editor-layout'),wrapper=document.createElement('div');wrapper.className='split-writing';layout.before(wrapper);wrapper.append(layout);

@@ -1,10 +1,12 @@
 # 跟着一篇示例论文，学会从编辑到导出
 
+v0.6 可直接运行“启动论文助手.bat”，在首页“新建 / 打开论文”中新建 AI 教学练习。以下练习步骤仍适用，旧截图中的布局可能略有不同；新增项目管理和插入预览见 [v0.6 图文指南](UPGRADE_0_6.md)。
+
 这份练习使用《基于 STM32 的智能照明系统设计》。你不需要了解 STM32，也能跟着练习封面、文字、图片和参考文献的排版。每次只改一处，观察 PDF 怎样变化；一旦出错，也更容易找到原因。
 
 本页中的姓名、学号、测试数据和图表均属于示例。练习只用于学习软件操作，不能把模拟结论当作真实研究结果。文献真实性、硬件代码能否运行，也不在排版编译的验证范围内。
 
-[返回项目首页](../README.md) · [下载完整运行包](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases/download/v0.5.0/xit-v0.5.0-live-preview-windows.zip) · [遇到错误时查看这里](TROUBLESHOOTING.md)
+[返回项目首页](../README.md) · [下载完整运行包](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases/download/v0.6.0/xit-v0.6.0-beginner-windows.zip) · [遇到错误时查看这里](TROUBLESHOOTING.md)
 
 ## 开始前，打开教学项目
 

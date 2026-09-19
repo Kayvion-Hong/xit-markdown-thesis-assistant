@@ -7,6 +7,8 @@
   <title>厦门工学院 Markdown 论文助手</title>
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/novice.css">
+  <link rel="stylesheet" href="/onboarding.css">
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css">
 </head>
 <body>
   <header class="topbar">
@@ -27,9 +29,9 @@
   <main class="shell">
     <aside class="sidebar">
       <div class="progress-card">
-        <span class="eyebrow">当前进度</span>
+        <span class="eyebrow">项目状态 · 不代表论文完成度</span>
         <strong id="progressText">正在读取项目…</strong>
-        <div class="progress-track"><span id="progressBar"></span></div>
+        <p id="progressBar"></p>
       </div>
       <nav aria-label="论文助手功能">
         <button class="nav-item active" data-panel="home"><span>1</span>开始</button>
@@ -151,6 +153,8 @@
             <div class="action-icon">终</div><h3>定稿检查</h3>
             <p>姓名、学号等占位内容也会被判定为问题。</p>
             <button class="button secondary full-button" data-action="final-check">开始定稿检查</button>
+            <button class="button primary full-button" data-action="pdf-final">检查并导出定稿 PDF</button>
+            <p>要求原模板字体与严格结构检查通过；仍需人工核对学校当年的要求。</p>
           </article>
         </div>
         <div id="buildResult" class="build-result empty">
@@ -195,6 +199,8 @@ $$
   <script src="/drafts.js"></script>
   <script src="/compat.js"></script>
   <script src="/live-preview.js"></script>
+  <script src="/vendor/katex/katex.min.js"></script>
+  <script src="/onboarding.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

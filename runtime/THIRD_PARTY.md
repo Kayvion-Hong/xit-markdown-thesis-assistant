@@ -10,3 +10,5 @@
 未复制 C:/Windows/Fonts 中的字体。Windows 字体权利属于其原权利人；使用原模板的系统字体选择规则。
 
 SHA256.json 记录随包运行文件的哈希，用于交付内容核对。许可证、源代码获取与发行条件请参照各组件原始声明。
+
+v0.6 界面另附 KaTeX 0.18.7（MIT），位于 `markdown/assistant/static/vendor/katex/`，用于离线公式预览。保留 LICENSE 与 PROVENANCE.json；从 npm 官方注册表取得，下载时校验 SHA-512 integrity。公式最终仍由 XeLaTeX 排版。官方项目：https://katex.org/ 。

@@ -21,7 +21,7 @@ def ascii_temp_root():
 @contextmanager
 def native_workspace(project, tex_root):
     env = dict(os.environ)
-    if os.name != 'nt' or not tex_root.is_dir():
+    if os.name != 'nt' or not (tex_root / 'bin/windows/xelatex.exe').is_file():
         yield project, None, env
         return
     # Keep the alias as written: resolve() would turn it back into the Unicode target.

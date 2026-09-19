@@ -13,7 +13,7 @@ async function flushSaves() {
   if (state.metadataDirty || state.dirty) return flushSaves();
   return true;
 }
-function askFields(title, fields) {
+function askFields(title, fields, previewContent) {
   return new Promise(resolve => {
     const dialog = document.createElement('dialog');
     const form = document.createElement('form');
@@ -26,10 +26,28 @@ function askFields(title, fields) {
         const option = document.createElement('option'); option.value = item.value; option.textContent = item.label; input.append(option);
       });
       else input.value = field.value || '';
+      if (field.options && field.options.length > 8) {
+        const search = document.createElement('input'); search.type = 'search';
+        search.placeholder = '输入标题或代号筛选'; search.setAttribute('aria-label', '筛选' + field.label);
+        search.oninput = () => {
+          const query = search.value.toLocaleLowerCase();
+          input.replaceChildren();
+          field.options.filter(item => item.value.startsWith('__') || item.label.toLocaleLowerCase().includes(query)).forEach(item => {
+            const option = document.createElement('option'); option.value = item.value; option.textContent = item.label; input.append(option);
+          });
+        };
+        form.append(search);
+      }
       label.append(input); form.append(label);
     });
     const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = '取消'; cancel.onclick = () => dialog.close();
     const ok = document.createElement('button'); ok.textContent = '确定'; ok.className = 'button primary';
+    if (previewContent) {
+      const panel = document.createElement('div'); panel.className = 'insert-preview';
+      form.append(panel);
+      const refresh = () => previewContent(panel, Object.fromEntries(new FormData(form)));
+      form.addEventListener('input', refresh); refresh();
+    }
     form.append(cancel, ok); dialog.append(form); document.body.append(dialog);
     let result = null;
     form.onsubmit = event => { event.preventDefault(); result = Object.fromEntries(new FormData(form)); dialog.close(); };
@@ -44,7 +62,7 @@ async function guidedInsert(kind) {
       const values = await askFields('插入三线表', [
         {name:'title', label:'表格标题'},
         {name:'cells', label:'从 Excel 复制表格粘贴到这里；首行为列名（以制表符分列）', multiline:true}
-      ]);
+      ], tablePreview);
       if (!values) return;
       const rows = values.cells.trim().split(/\r?\n/).map(row => row.split('\t').map(mdText));
       if (rows.length < 2 || rows[0].length < 2 || rows.some(row => row.length !== rows[0].length)) return notice('请粘贴至少两行、两列且每行列数一致的表格。', true);
@@ -54,7 +72,7 @@ async function guidedInsert(kind) {
       return;
     }
     if (kind === 'formula') {
-      const values = await askFields('编号公式（编号和引用自动生成）', [{name:'formula', label:'公式内容：使用 LaTeX 数学语法，例如 y = ax + b；不用填写 $$', multiline:true, value:'y = ax + b'}]);
+      const values = await askFields('编号公式（编号和引用自动生成）', [{name:'formula', label:'公式内容：使用 LaTeX 数学语法，例如 y = ax + b；不用填写 $$', multiline:true, value:'y = ax + b'}], formulaPreview);
       if (values) {
         const label = uniqueLabel('eq');
         insertAtCursor(`\n::: {#${label} .equation}\n$$\n${values.formula}\n$$\n:::\n\n由[式](#${label})可知……\n`);

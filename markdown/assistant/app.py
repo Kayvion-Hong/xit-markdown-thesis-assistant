@@ -22,6 +22,10 @@ import threading
 import webbrowser
 import backups
 import preview
+import projects
+import tempfile
+from urllib.request import build_opener, ProxyHandler
+from urllib.error import URLError
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -46,10 +50,44 @@ METADATA_PATH = THESIS_DIR / "metadata.yaml"
 STATIC_DIR = ASSISTANT_DIR / "static"
 BUILD_PDF = MARKDOWN_ROOT / "build" / "thesis.pdf"
 PROJECT_MODE = 'thesis'
+PROJECT_DIR = None
+# Project handshakes stay on loopback even when Windows has a system proxy.
+LOCAL_HTTP = build_opener(ProxyHandler({}))
+
+
+def template_path():
+    if PROJECT_DIR:
+        projects.read(PROJECT_DIR)
+        return PROJECT_DIR / 'template.zip'
+    return REPO_ROOT / '厦门工学院毕业设计论文模板.zip'
+
+
+def preview_directory():
+    return PROJECT_DIR / '.preview' if PROJECT_DIR else MARKDOWN_ROOT / '.preview' / PROJECT_MODE
+
+
+def backup_directory():
+    return PROJECT_DIR / 'backups' if PROJECT_DIR else MARKDOWN_ROOT / '.project-backups' / PROJECT_MODE
+
+
+def select_external_project(path):
+    global PROJECT_DIR, THESIS_DIR, METADATA_PATH, BUILD_PDF, PROJECT_MODE
+    root = Path(path).resolve()
+    info = projects.read(root)
+    PROJECT_DIR = root
+    PROJECT_MODE = info['mode']
+    THESIS_DIR = root / 'thesis'
+    METADATA_PATH = THESIS_DIR / 'metadata.yaml'
+    BUILD_PDF = root / 'build' / 'thesis.pdf'
+
+
+def project_port(path):
+    return 20000 + int(hashlib.sha256(str(path.resolve()).encode()).hexdigest()[:8], 16) % 30000
 
 
 def select_project(mode: str) -> None:
-    global THESIS_DIR, METADATA_PATH, BUILD_PDF, PROJECT_MODE
+    global THESIS_DIR, METADATA_PATH, BUILD_PDF, PROJECT_MODE, PROJECT_DIR
+    PROJECT_DIR = None
     if mode not in ('thesis', 'ai'):
         raise AssistantError('不支持的项目。')
     PROJECT_MODE = mode
@@ -431,8 +469,8 @@ def environment_status() -> dict[str, Any]:
         "xelatex": executable_status("xelatex", ["--version"]),
         "biber": executable_status("biber", ["--version"]),
         "template": {
-            "ok": (REPO_ROOT / "厦门工学院毕业设计论文模板.zip").is_file(),
-            "version": "已找到" if (REPO_ROOT / "厦门工学院毕业设计论文模板.zip").is_file() else "模板 ZIP 不在项目根目录",
+            "ok": template_path().is_file(),
+            "version": "项目固定模板已校验" if PROJECT_DIR else "程序附带模板",
         },
     }
     if os.name == 'nt':
@@ -447,6 +485,7 @@ ACTIONS = {
     'pdf': [],
     'pdf-portable': [],
     'final-check': ['--validate-only', '--strict'],
+    'pdf-final': ['--strict'],
 }
 
 
@@ -464,13 +503,17 @@ def run_action_locked(action: str) -> dict[str, Any]:
     flags = ACTIONS.get(action)
     if flags is None:
         raise AssistantError("不支持这个操作。")
-    command = [sys.executable, str(MARKDOWN_ROOT / 'tools/build.py'), '--source-dir', str(THESIS_DIR), '--build-dir', str(BUILD_PDF.parent), *flags]
+    if action == 'pdf-final' and (os.name != 'nt' or not environment_status().get('fonts', {}).get('ok')):
+        raise AssistantError('定稿导出需要 Windows 原模板字体。请先补齐字体；当前仍可使用随包字体预览。')
+    command = [sys.executable, str(MARKDOWN_ROOT / 'tools/build.py'), '--source-dir', str(THESIS_DIR), '--build-dir', str(BUILD_PDF.parent), '--template-zip', str(template_path()), *flags]
     issues = writing_issues()
     if issues:
         return {'ok': False, 'returncode': 2, 'output': '请先处理上方的写作问题。', 'issues': issues, 'pdf': False}
     child_environment = dict(os.environ)
     child_environment["PYTHONUTF8"] = "1"
     child_environment["PYTHONIOENCODING"] = "utf-8"
+    if action == 'pdf-final':
+        child_environment.pop('XIT_PORTABLE_FONTS', None)
     if action == "pdf-portable":
         child_environment["XIT_PORTABLE_FONTS"] = "1"
     result = subprocess.run(
@@ -495,13 +538,13 @@ def run_preview() -> dict[str, Any]:
         def compiler(source, output):
             environment=dict(os.environ, PYTHONUTF8='1', PYTHONIOENCODING='utf-8')
             result=subprocess.run([sys.executable,str(MARKDOWN_ROOT/'tools/build.py'),
-                                   '--source-dir',str(source),'--build-dir',str(output)],
+                                   '--source-dir',str(source),'--build-dir',str(output), '--template-zip', str(template_path())],
                                   cwd=MARKDOWN_ROOT,env=environment,capture_output=True,text=True,
                                   encoding='utf-8',errors='replace',timeout=300)
             log=result.stdout+'\n'+result.stderr
             return {'ok':result.returncode==0,'output':log,
                     'portable_fonts':'使用随包开源替代字体' in log}
-        return preview.compile_snapshot(THESIS_DIR,MARKDOWN_ROOT/'.preview'/PROJECT_MODE,WRITE_LOCK,compiler)
+        return preview.compile_snapshot(THESIS_DIR,preview_directory(),WRITE_LOCK,compiler)
     finally:
         BUILD_LOCK.release()
 
@@ -514,12 +557,18 @@ def project_payload() -> dict[str, Any]:
         public_metadata[key] = ", ".join(map(str, value)) if isinstance(value, list) else value
     return {
         'mode': PROJECT_MODE,
+        'app_version': projects.VERSION,
+        'project_directory': str(PROJECT_DIR or THESIS_DIR),
+        'external_project': PROJECT_DIR is not None,
+        'project_name': projects.read(PROJECT_DIR)['name'] if PROJECT_DIR else '旧版项目（尚未分离）',
+        'preview_status': preview.status(THESIS_DIR, preview_directory()),
+        'chapter_count': len(metadata.get('chapters', [])),
         'project_id': hashlib.sha256(str(THESIS_DIR.resolve()).encode()).hexdigest(),
         "metadata": public_metadata,
         "files": content_files(metadata),
         "environment": environment_status(),
         "pdf": BUILD_PDF.is_file(),
-        'preview_pdf': (MARKDOWN_ROOT/'.preview'/PROJECT_MODE/'latest.pdf').is_file() or BUILD_PDF.is_file(),
+        'preview_pdf': (preview_directory()/'latest.pdf').is_file() or BUILD_PDF.is_file(),
         'portable_fonts': (BUILD_PDF.parent/'build-report.txt').is_file() and '使用随包开源替代字体' in (BUILD_PDF.parent/'build-report.txt').read_text(encoding='utf-8'),
     }
 
@@ -530,7 +579,7 @@ class ServerState:
 
 
 class AssistantHandler(BaseHTTPRequestHandler):
-    server_version = "XITThesisAssistant/0.3"
+    server_version = "XITThesisAssistant/" + projects.VERSION
 
     @property
     def state(self) -> ServerState:
@@ -578,18 +627,18 @@ class AssistantHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         try:
-            if parsed.path.startswith('/vendor/pdfjs/'):
-                base=(STATIC_DIR/'vendor/pdfjs').resolve()
-                path=(base/unquote(parsed.path[len('/vendor/pdfjs/'):])).resolve()
+            if parsed.path.startswith('/vendor/'):
+                base=(STATIC_DIR/'vendor').resolve()
+                path=(base/unquote(parsed.path[len('/vendor/'):])).resolve()
                 if not path.is_relative_to(base) or not path.is_file():
                     self.send_error(404); return
                 kind='text/javascript' if path.suffix=='.mjs' else mimetypes.guess_type(str(path))[0] or 'application/octet-stream'
                 self.send_bytes(path.read_bytes(),kind);return
             if parsed.path == '/preview-map.json':
-                path=MARKDOWN_ROOT/'.preview'/PROJECT_MODE/'latest-map.json'
+                path=preview_directory()/'latest-map.json'
                 self.send_json(json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {'files':{},'anchors':[]});return
             if parsed.path == '/preview.pdf':
-                path=MARKDOWN_ROOT/'.preview'/PROJECT_MODE/'latest.pdf'
+                path=preview_directory()/'latest.pdf'
                 if not path.is_file():path=BUILD_PDF
                 if not path.is_file():self.send_error(404);return
                 self.send_bytes(path.read_bytes(),'application/pdf');return
@@ -598,20 +647,31 @@ class AssistantHandler(BaseHTTPRequestHandler):
                 html = html.replace("__XIT_TOKEN__", self.state.token)
                 self.send_bytes(html.encode("utf-8"), "text/html; charset=utf-8")
                 return
-            if parsed.path in {"/app.css", "/app.js", "/novice.js", "/novice.css", "/chapters.js", "/tutorial.js", "/comfort.js", "/undo.js", "/drafts.js", "/compat.js", "/live-preview.js"}:
+            if parsed.path in {"/app.css", "/app.js", "/novice.js", "/novice.css", "/chapters.js", "/tutorial.js", "/comfort.js", "/undo.js", "/drafts.js", "/compat.js", "/live-preview.js", "/onboarding.js", "/onboarding.css"}:
                 file = STATIC_DIR / parsed.path[1:]
                 kind = "text/css" if parsed.path.endswith(".css") else "text/javascript"
                 self.send_bytes(file.read_bytes(), kind + "; charset=utf-8")
                 return
             if parsed.path == '/api/backups':
                 with WRITE_LOCK:
-                    store = MARKDOWN_ROOT / '.project-backups' / PROJECT_MODE
+                    store = backup_directory()
                     identity = parse_qs(parsed.query).get('id', [''])[0]
                     result = backups.preview(THESIS_DIR, store, identity) if identity else {'backups': backups.listing(store)}
                 self.send_json({'ok': True, **result})
                 return
             if parsed.path == "/api/project":
                 self.send_json({"ok": True, **project_payload()})
+                return
+            if parsed.path == '/api/identity':
+                self.send_json({'project_id': hashlib.sha256(str(THESIS_DIR.resolve()).encode()).hexdigest(),
+                                'project_directory': str(PROJECT_DIR or THESIS_DIR)})
+                return
+            if parsed.path == '/api/projects':
+                self.send_json({'projects': projects.listing(), 'home': str(projects.data_home())}); return
+            if parsed.path == '/api/health':
+                with WRITE_LOCK:
+                    self.send_json({'preview_status': preview.status(THESIS_DIR, preview_directory()),
+                                    'issues': writing_issues(), 'backups': len(backups.listing(backup_directory()))})
                 return
             if parsed.path == "/api/file":
                 relative = parse_qs(parsed.query).get("path", [""])[0]
@@ -645,6 +705,59 @@ class AssistantHandler(BaseHTTPRequestHandler):
             return
         try:
             body = self.json_body()
+            if self.path == '/api/project-export':
+                if not PROJECT_DIR:
+                    raise AssistantError('请先通过“我的论文”复制到独立项目。')
+                with WRITE_LOCK, tempfile.TemporaryFile() as archive:
+                    projects.export(PROJECT_DIR, archive)
+                    archive.seek(0)
+                    self.send_bytes(archive.read(), 'application/zip')
+                return
+            if self.path == '/api/projects':
+                action = body.get('action')
+                if action == 'create':
+                    mode = body.get('mode', 'thesis')
+                    if mode not in ('thesis', 'ai', 'copy'):
+                        raise AssistantError('不支持的项目类型。')
+                    source = THESIS_DIR if mode == 'copy' else MARKDOWN_ROOT / ('examples/ai/thesis' if mode == 'ai' else 'thesis')
+                    with WRITE_LOCK:
+                        root = projects.create(source, template_path() if mode == 'copy' else REPO_ROOT / '厦门工学院毕业设计论文模板.zip', body.get('name', ''), PROJECT_MODE if mode == 'copy' else mode)
+                elif action == 'open':
+                    root = Path(str(body.get('path', ''))).resolve()
+                    projects.read(root)
+                elif action == 'import-legacy':
+                    old = Path(str(body.get('path', ''))).resolve()
+                    source = old / 'markdown/thesis'
+                    template = old / '厦门工学院毕业设计论文模板.zip'
+                    if not (source / 'metadata.yaml').is_file() or not template.is_file():
+                        raise AssistantError('请选择旧版 XIT 文件夹：其中应同时有 markdown 和原模板 ZIP。')
+                    root = projects.create(source, template, '从旧版导入的论文')
+                else:
+                    raise AssistantError('不支持的项目操作。')
+                port = project_port(root / 'thesis')
+                url = f'http://127.0.0.1:{port}/'
+                try:
+                    with LOCAL_HTTP.open(url + 'api/identity', timeout=2) as response:
+                        existing = json.load(response)
+                    if existing.get('project_id') != hashlib.sha256(str((root/'thesis').resolve()).encode()).hexdigest():
+                        raise AssistantError('该项目端口已被其他程序占用，请关闭占用程序后重试。')
+                except URLError:
+                    log = root / 'assistant.log'
+                    with log.open('a', encoding='utf-8') as output:
+                        subprocess.Popen([sys.executable, '-X', 'utf8', str(ASSISTANT_DIR/'app.py'), '--project-dir', str(root), '--no-browser'], stdout=output, stderr=output, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+                    for attempt in range(30):
+                        time.sleep(.2)
+                        try:
+                            with LOCAL_HTTP.open(url + 'api/identity', timeout=1) as response:
+                                ready = json.load(response)
+                            if ready.get('project_directory') == str(root):
+                                break
+                        except URLError:
+                            continue
+                    else:
+                        raise AssistantError(f'项目已保存，但未能打开页面。请检查 {log}')
+                projects.remember(root)
+                self.send_json({'ok': True, 'url': url, 'path': str(root)}); return
             if self.path == '/api/preview':
                 self.send_json(run_preview());return
             if self.path == '/api/compatibility':
@@ -665,12 +778,14 @@ class AssistantHandler(BaseHTTPRequestHandler):
                     raise AssistantError('正在编译，请等编译结束后再备份或恢复。')
                 try:
                     with WRITE_LOCK:
-                        store = MARKDOWN_ROOT / '.project-backups' / PROJECT_MODE
+                        store = backup_directory()
                         if body.get('action') == 'create':
                             result = backups.create(THESIS_DIR, store, body.get('name', ''))
                         elif body.get('action') == 'restore':
                             result = backups.restore(THESIS_DIR, store, str(body.get('id', '')), str(body.get('revision', '')))
                             BUILD_PDF.unlink(missing_ok=True)
+                            for name in ('latest.pdf', 'latest-map.json'):
+                                (preview_directory() / name).unlink(missing_ok=True)
                             self.state.token = secrets.token_urlsafe(24)
                         else:
                             raise AssistantError('不支持的备份操作。')
@@ -738,17 +853,46 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-browser", action="store_true", help="不自动打开浏览器")
     parser.add_argument("--port", type=int, default=None, help="监听端口；默认按项目路径固定，0 表示临时随机端口")
     parser.add_argument('--project', choices=('thesis', 'ai'), default='thesis', help='独立普通项目或 AI 教学项目')
+    parser.add_argument('--project-dir', help='独立论文文件夹（包含 project.yaml）')
+    parser.add_argument('--legacy', action='store_true', help='直接编辑旧版程序内的论文，仅用于迁移前恢复草稿')
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     select_project(args.project)
-    port = args.port if args.port is not None else 20000 + int(hashlib.sha256(str(THESIS_DIR.resolve()).encode()).hexdigest()[:8], 16) % 30000
+    if args.project_dir:
+        select_external_project(args.project_dir)
+    elif not args.legacy:
+        home = projects.data_home()
+        marker = home / ('default-' + args.project + '.txt')
+        if marker.exists():
+            root = Path(marker.read_text(encoding='utf-8'))
+        else:
+            root = projects.create(THESIS_DIR, template_path(), 'AI 教学练习' if args.project == 'ai' else '我的毕业论文', args.project)
+            marker.write_text(str(root), encoding='utf-8')
+        select_external_project(root)
+    port = args.port if args.port is not None else project_port(THESIS_DIR)
     try:
         server = ThreadingHTTPServer(("127.0.0.1", port), AssistantHandler)
     except OSError as error:
+        try:
+            with LOCAL_HTTP.open(f'http://127.0.0.1:{port}/api/identity', timeout=2) as response:
+                existing = json.load(response)
+            if existing.get('project_id') == hashlib.sha256(str(THESIS_DIR.resolve()).encode()).hexdigest():
+                if not args.no_browser:
+                    webbrowser.open(f'http://127.0.0.1:{port}/')
+                print('已打开正在运行的论文助手。')
+                return 0
+        except (URLError, ValueError, TimeoutError):
+            pass
         raise SystemExit(f'无法打开本机端口 {port}，请先关闭同一项目的旧助手再重试。为保留草稿访问地址，不自动切换端口。详细信息：{error}')
+    if PROJECT_DIR:
+        try:
+            projects.daily_backup(PROJECT_DIR)
+        except (OSError, ValueError):
+            server.server_close()
+            raise
     server.state = ServerState(token=secrets.token_urlsafe(24))  # type: ignore[attr-defined]
     url = f"http://127.0.0.1:{server.server_port}/"
     print("=" * 54)

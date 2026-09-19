@@ -10,6 +10,8 @@
 
 ## 阅读路线
 
+**v0.6 新手升级版已加入独立论文目录、四步操作向导、真实状态检查、每日启动备份、项目 ZIP 导出、查找替换，以及公式 / 表格 / 图片插入预览。** 先看 [v0.6 图文使用与旧版迁移](docs/UPGRADE_0_6.md)。已有论文请先在旧版保存，再通过新首页导入；不要覆盖旧文件夹。
+
 | 你现在想做什么 | 从哪里开始 |
 | --- | --- |
 | 刚接触项目，想先运行起来 | [下载与第一次启动](#第一次使用从这里开始) |
@@ -21,17 +23,17 @@
 
 ## 第一次使用，从这里开始
 
-**Windows 新手请下载完整运行包。** 前往 [Releases 下载页面](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases)，在版本的 Assets 中选择 `xit-v0.5.0-live-preview-windows.zip`。GitHub 自动提供的 `Source code (zip)` 只有源码，不包含运行环境。
+**Windows 新手请下载完整运行包。** 前往 [Releases 下载页面](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases)，在版本的 Assets 中选择 `xit-v0.6.0-beginner-windows.zip`。GitHub 自动提供的 `Source code (zip)` 只有源码，不包含运行环境。
 
-[下载 v0.5.0 Windows 完整包](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases/download/v0.5.0/xit-v0.5.0-live-preview-windows.zip) · [下载校验文件](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases/download/v0.5.0/xit-v0.5.0-live-preview-windows.zip.sha256)
+[下载 v0.6.0 Windows 完整包](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases/download/v0.6.0/xit-v0.6.0-beginner-windows.zip) · [下载校验文件](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases/download/v0.6.0/xit-v0.6.0-beginner-windows.zip.sha256)
 
-完整包约 379 MB。下载完成后再解压，建议为解压、编译和备份留出足够磁盘空间。只下载仓库右上角 Code 菜单中的 ZIP，会缺少运行环境。
+完整包约 381 MB。下载完成后再解压，建议为解压、编译和备份留出足够磁盘空间。只下载仓库右上角 Code 菜单中的 ZIP，会缺少运行环境。
 
 1. 将完整 ZIP 全部解压到较短的路径，例如 `D:\XIT`。不要在压缩包窗口里直接运行。
-2. 打开解压出的 `XIT` 文件夹，双击 `启动AI示例教学.bat`，先熟悉操作。
-3. 保持启动窗口打开。在浏览器的“检查与导出”中点击“生成 PDF”，确认示例能编译。
+2. 打开解压出的 `XIT` 文件夹，双击 `启动论文助手.bat`，在首页“新建 / 打开论文”中新建 AI 教学练习。
+3. 保持启动窗口打开。在写作页面点击“立即编译”，确认示例能编译。
 4. 按页面“AI 示例教学”的练习修改姓名、一段正文和一张表。
-5. 练习后点击“关闭助手”，再双击 `启动论文助手.bat`，开始自己的论文。
+5. 练习后回首页，点击“新建 / 打开论文”，新建自己的论文。
 
 完整操作见 **[新手图文指南](docs/GETTING_STARTED.md)**。遇到启动、字体或编译问题，查阅 [常见问题](docs/TROUBLESHOOTING.md)。
 
@@ -115,12 +117,14 @@ XIT/
 
 ## 从示例转到自己的论文
 
-练习结束后点击“关闭助手”，再双击 `启动论文助手.bat`。两个入口使用独立文稿：
+练习结束后回首页，通过“新建 / 打开论文”创建自己的项目。普通论文与教学练习分别保存：
 
 | 入口 | 编辑的目录 | 正式生成的 PDF |
 | --- | --- | --- |
-| 启动论文助手.bat | `markdown/thesis/` | `markdown/build/thesis.pdf` |
-| 启动AI示例教学.bat | `markdown/examples/ai/thesis/` | `markdown/build-ai/thesis.pdf` |
+| 首页新建论文 | 用户文档目录下的独立项目 / `thesis/` | 该项目的 `build/thesis.pdf` |
+| 首页新建 AI 教学练习 | 另一个独立项目 / `thesis/` | 该项目的 `build/thesis.pdf` |
+
+首页显示实际保存路径。程序内的 `markdown/thesis/` 和 `markdown/examples/ai/thesis/` 用于创建副本。旧的 AI 启动文件仍保留，但新手可统一使用普通启动入口。
 
 普通项目中也有占位内容。开始写作后逐项替换资料、摘要、章节、图表及文献，不能把“普通项目”理解为已经可以提交的成品。
 
@@ -239,7 +243,7 @@ XIT/
 
 换电脑前先等待内容同步，处理未恢复草稿，关闭助手，再复制整个项目文件夹。浏览器草稿不会跟随文件夹自动迁移，重要内容应先恢复并保存成文件。
 
-更新程序时，先备份旧项目，再把新版本解压到独立目录并运行示例。确认新版本可用后，再迁移自己的文稿。当前没有承诺跨版本自动迁移所有结构；如有自定义配置，请先对照版本说明或提交问题咨询。
+更新程序时先导出项目 ZIP，再将新版本解压到独立目录。v0.6 的论文保存在程序目录之外，升级后可继续打开；从 v0.5 导入的具体步骤见[迁移说明](docs/UPGRADE_0_6.md)。有自定义配置时先在副本中试编译。
 
 ## 项目结构
 

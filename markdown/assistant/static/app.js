@@ -40,6 +40,7 @@ function showPanel(name) {
   $$('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.panel === name));
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'writing') livePreview.open(); else livePreview.close();
+  if (name === 'home' && state.project) refreshHealth().catch(error => notice(error.message, true));
 }
 
 function updateProgress() {
@@ -47,10 +48,9 @@ function updateProgress() {
   const metadata = state.project.metadata;
   const required = ['title', 'english_title', 'author', 'student_id', 'major', 'grade', 'supervisor', 'date'];
   const completed = required.filter((key) => metadata[key] && !/请输入|请填写|TODO|TBD/i.test(metadata[key])).length;
-  let percent = 15 + Math.round(completed / required.length * 45);
-  if (state.project.pdf) percent += 35;
-  $('#progressBar').style.width = `${Math.min(percent, 100)}%`;
-  $('#progressText').textContent = state.project.pdf ? '已生成 PDF，可继续完善' : completed === required.length ? '资料已填写，继续写正文' : `基本资料 ${completed}/${required.length}`;
+  $('#progressText').textContent = `基本资料 ${completed}/${required.length} 项已填写`;
+  $('#progressBar').textContent = `${state.project.chapter_count} 个章节 · 可随时增删`;
+  window.onboardingReady?.(state.project);
 }
 
 function renderEnvironment(environment) {
@@ -222,10 +222,10 @@ async function uploadImage(file) {
   const reader = new FileReader();
   reader.onload = async () => {
     try {
+      const title = await askFields('图片说明', [{name:'title', label:'图片标题', value:'图片说明'}], panel => imagePreview(panel, file, reader.result));
+      if (!title) return;
       const result = await api('/api/upload', { method: 'POST', body: JSON.stringify({ name: file.name, data: reader.result }) });
       const label = uniqueLabel('fig');
-      const title = await askFields('图片说明', [{name:'title', label:'图片标题', value:'图片说明'}]);
-      if (!title) return;
       insertAtCursor(`\n![${mdText(title.title)}](${result.path}){#${label} width=90%}\n\n如[图](#${label})所示。\n`);
       notice(`图片已保存到 ${result.path}`);
     } catch (error) {
@@ -239,7 +239,7 @@ async function runAction(action) {
   if (state.dirty && !(await saveFile(true))) return;
   if (!(await saveMetadata())) return;
   const labels = { check: '正在检查论文…', pdf: '正在生成 PDF…', 'pdf-portable': '正在使用随包替代字体生成预览 PDF…', 'final-check': '正在进行定稿检查…' };
-  $('#busyText').textContent = labels[action];
+  $('#busyText').textContent = labels[action] || '正在检查并导出定稿 PDF…';
   $('#busy').classList.remove('hidden');
   try {
     const result = await api('/api/action', { method: 'POST', body: JSON.stringify({ action }) });

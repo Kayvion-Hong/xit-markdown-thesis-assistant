@@ -6,13 +6,13 @@
 
 ## 1. 下载正确的文件
 
-打开 [Releases](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases)，找到版本下的 **Assets**，下载 `xit-v0.5.0-live-preview-windows.zip`。
+打开 [Releases](https://github.com/Kayvion-Hong/xit-markdown-thesis-assistant/releases)，找到版本下的 **Assets**，下载 `xit-v0.6.0-beginner-windows.zip`。
 
 注意区分：
 
 | 下载项 | 用途 |
 | --- | --- |
-| `xit-v0.5.0-live-preview-windows.zip` | 完整运行包，包含 Python、Pandoc 和 TeX 环境 |
+| `xit-v0.6.0-beginner-windows.zip` | 完整运行包，包含 Python、Pandoc 和 TeX 环境 |
 | `Source code (zip)` / `Source code (tar.gz)` | 开发用源码，需要自己配置环境 |
 
 下载后右键解压，选择较短的路径，例如 `D:\XIT`。进入解压后的文件夹，确认 `启动论文助手.bat`、`markdown` 和 `runtime` 在同一级。不要只拖出一个 BAT，也不要在压缩软件里直接双击运行。
@@ -151,6 +151,6 @@ AI 示例含演示占位文献。编译通过只能说明格式可处理，不�
 
 建议依次完成：生成原示例、改姓名、改正文、改图题并插表、插公式、核对模拟数据、引用文献、增减章节、查看代码附录。每次只改一项，再编译比较。
 
-完成练习后点击“关闭助手”，双击普通的 `启动论文助手.bat`。普通项目在 `markdown/thesis/`；教学内容不会自动成为你的正式论文。保留所需的排版结构，换成自己的研究内容、真实数据和已核验文献。
+完成练习后回首页，在“新建 / 打开论文”中新建普通论文。v0.6 将论文保存在用户文档目录的独立文件夹，首页显示实际路径。教学内容不会自动成为正式论文。新版入口、插入预览与迁移步骤见 [v0.6 图文指南](UPGRADE_0_6.md)。
 
 下一次继续写作时，再双击相同文件夹中的启动文件即可。已有环境齐全时，日常编辑和编译不需要联网。

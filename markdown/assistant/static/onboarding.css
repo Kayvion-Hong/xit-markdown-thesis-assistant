@@ -1,0 +1,13 @@
+body:not(.advanced-mode) .advanced-only { display:none; }
+.advanced-toggle { font-size:13px; display:flex; align-items:center; gap:6px; }
+#projectLocation { white-space:pre-wrap; overflow-wrap:anywhere; }
+#healthList { padding-left:22px; line-height:1.8; }
+.wizard-steps { display:flex; flex-wrap:wrap; gap:10px; }
+.wizard-steps button { padding:12px; border:1px solid #b8d3d0; background:white; border-radius:8px; cursor:pointer; }
+.insert-preview { margin:14px 0; padding:14px; border:1px solid #d7e4e2; background:#f7faf9; max-height:340px; overflow:auto; }
+.insert-preview table { border-collapse:collapse; width:100%; }
+.insert-preview th,.insert-preview td { padding:7px; border-bottom:1px solid #c9d8d5; overflow-wrap:anywhere; }
+.insert-preview img { max-width:100%; max-height:230px; object-fit:contain; }
+.preview-warning { color:#a13b22; white-space:pre-wrap; overflow-wrap:anywhere; }
+dialog .find-result { color:#126959; min-height:24px; }
+#progressBar { font-size:13px; line-height:1.6; }
